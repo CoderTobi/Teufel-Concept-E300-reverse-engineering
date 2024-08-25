@@ -1,0 +1,1 @@
+Erkenntnisse in Obsidian
