@@ -3,8 +3,7 @@
 #include "secrets.hpp"
 
 // Config
-const uint8_t LED_PIN = 22;
-const uint8_t CD_PIN = 23;
+const uint8_t CD_PIN = 23; // Zweck unbekannt - aktuell unused
 const uint8_t SDA_PIN = 15;
 const uint8_t SCL_PIN = 2;
 const uint8_t MUTE_PIN = 19;
@@ -25,14 +24,7 @@ void onSwitchCommand(bool state, HASwitch* sender)
   Serial.print("Standby is now: ");
   Serial.println(state);
 
-  if(state == true)
-  {
-    digitalWrite(LED_PIN, LOW); // LED ist invertiert LOW => LED an
-  }
-  else
-  {
-    digitalWrite(LED_PIN, HIGH);
-  }
+  
   sender->setState(state); // report state back to the Home Assistant
 }
 
@@ -86,8 +78,14 @@ void setup()
   }
   Serial.println("connected"); 
 
-  // your setup logic goes here
-  pinMode(LED_PIN, OUTPUT);
+  // PIN Mode Setup
+  pinMode(ST_PIN, OUTPUT);
+  pinMode(MUTE_PIN, OUTPUT);
+  //pinMode(CD_PIN, OUTPUT);
+  digitalWrite(ST_PIN, LOW);
+  digitalWrite(MUTE_PIN, LOW);
+
+  // Device Types Setup
   switchPower.onCommand(onSwitchCommand);
   switchPower.setIcon("mdi:power-standby");
   switchPower.setName("Power");
