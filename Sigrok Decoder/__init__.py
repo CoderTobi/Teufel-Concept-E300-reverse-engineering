@@ -3,7 +3,7 @@
 ##
 
 '''
-This decoder is made by me and just for testing
+Decoder für meinen Subwoofer
 '''
 
 from .pd import Decoder
