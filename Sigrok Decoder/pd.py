@@ -41,6 +41,8 @@ class Decoder(srd.Decoder):
 
     def reset(self):
         self.state = 'IDLE'
+        self.volume = -1
+        self.ss_summary = -1
         self.counter = 0
 
     def start(self):
@@ -55,12 +57,16 @@ class Decoder(srd.Decoder):
         address = self.packetBuffer["address"]
         data = self.packetBuffer["data"]
 
-        if data[0] == 0xF8:
-            self.put_an(ss, es, [1, ['Power: ON','ON']])
-        elif data[0] == 0xF9:
-            self.put_an(ss, es, [1, ['Power: OFF','OFF']])
-        elif data[0] == 0xC0:
-            self.put_an(ss, es, [2, ['Separator', 'sep']])
+        # Debug
+        #self.put_an(ss, es, [0, ['Data len %i' % len(data) ]])
+
+        if len(data) == 1:
+            if data[0] == 0xF8:
+                self.put_an(ss, es, [1, ['Power: ON','ON']])
+            elif data[0] == 0xF9:
+                self.put_an(ss, es, [1, ['Power: OFF','OFF']])
+            elif data[0] == 0xC0:
+                self.put_an(ss, es, [2, ['Separator', 'sep']])
         elif len(data) == 2:
             register, value = self.convertData(data)
             if address == 0x44:
@@ -71,7 +77,10 @@ class Decoder(srd.Decoder):
                 chanel = self.convertRegisterToChanel(register)
                 self.put_an(ss, es, [4, ['Volume-Ch%i: %i' % (chanel,value)]])
                 if chanel == 2:
-                    self.put_an(self.ss_summary, es, [6, ['Volume: %i; Bass: %i;' % (self.volume,value)]])
+                    if self.volume == -1 or self.ss_summary == -1:
+                        self.put_an(ss, es, [6, ['Error: Volume-All missing','Error', 'Err']])
+                    else:
+                        self.put_an(self.ss_summary, es, [6, ['Volume: %i; Bass: %i;' % (self.volume,value)]])
         else:
             self.put_an(ss, es, [5, ['Error','Err']])
 
@@ -126,6 +135,9 @@ class Decoder(srd.Decoder):
             if cmd == "STOP":
                 self.packetBuffer["es"] = es
                 self.processPacketBuffer()
+                self.state = "IDLE"
+            elif cmd == "NACK":
+                self.put_an(self.packetBuffer["ss"], es, [5, ['Error: NACK','Err:NA']])
                 self.state = "IDLE"
             elif cmd == "ADDRESS WRITE":
                 self.packetBuffer["address"] = databyte
