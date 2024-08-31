@@ -28,6 +28,33 @@ HANumber numberAll("VolAll");
 HANumber numberBass("VolBass");
 HASwitch switchPower("Power");
 
+// ===================================== Other =================================
+
+// Funktioniert nicht, da er nicht extra den Server fragt, sondern den lokalen cache verwendet
+/*
+void fetchVolFromHA()
+{
+  HANumeric all = numberAll.getCurrentState();
+  targetVol = all.toUInt8();
+  Serial.print("MQTT_fetchVol: ");
+  Serial.println(targetVol);
+  HANumeric bass = numberBass.getCurrentState();
+  targetVol = bass.toUInt8();
+  Serial.print("MQTT_fetchBass: ");
+  Serial.println(targetBass);
+}
+*/
+
+// Delay Ersatz, der trotzdem MQTT pflegt
+void myDelay(int ms)
+{
+  unsigned long startMillis = millis();
+  while((millis() - startMillis) < ms)
+  {
+    mqtt.loop();
+  }
+}
+
 // ===================== Call Backs ========================
 
 void onSwitchCommand(bool state, HASwitch* sender)
@@ -157,10 +184,10 @@ void i2c_write_data(uint8_t address, uint8_t reg, uint8_t bcdNumbers)
 // ==================================== Actions =================================
 
 void turnOn()
-{
+{  
   digitalWrite(ST_PIN, LOW); // Aus Standby wecken
 
-  delay(2491);
+  myDelay(2491);
 
   i2c_write_power(true);
   i2c_write_sep();
@@ -169,11 +196,11 @@ void turnOn()
   
   sendUpdate(); // Tatsächliche Lautstärke(Dämpfung) senden
 
-  delay(350);
+  myDelay(350);
 
   digitalWrite(MUTE_PIN, HIGH); // MUTE deaktivieren(HIGH)
 
-  delay(3);
+  myDelay(3);
 
   sendUpdate();
 }
@@ -187,6 +214,9 @@ void turnOff()
 
 void sendUpdate()
 {
+  currentBass=targetBass;
+  currentVol=targetVol;
+  
   i2c_write_sep();
   i2c_write_power(true);
 
@@ -242,7 +272,7 @@ void setup()
   WiFi.begin(WIFI_SSID, WIFI_PW);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print("."); 
-    delay(500); // waiting for the connection
+    myDelay(500); // waiting for the connection
   }
   Serial.println("connected"); 
 
@@ -257,6 +287,10 @@ void setup()
   numberBass.setIcon("mdi:volume-vibrate");
   numberBass.onCommand(onVolBassChange);
 
+  // LWT aktivieren
+  device.enableSharedAvailability();
+  device.enableLastWill();
+
   // MQTT broker connection (muss ans Ende von Setup)
   mqtt.begin(MQTT_HOST, MQTT_USER, MQTT_PW);
 }
@@ -268,26 +302,27 @@ void loop() {
 
   if(targetPower != currentPower)
   {
-    if (targetPower)
+
+    currentPower = targetPower;
+
+    if (currentPower)
     {
+      //fetchVolFromHA();
       turnOn();
     }
     else 
     {
       turnOff();
     }
-    currentPower = targetPower;
 
-    delay(1000); // Anti Spam
+    myDelay(1000); // Anti Spam
   }
 
   if( (currentPower == true) && ((currentBass != targetBass) || (currentVol != targetVol)) )
   {
-    currentBass=targetBass;
-    currentVol=targetVol;
     sendUpdate();
 
-    delay(500); // Anti Spam
+    myDelay(100); // Anti Spam
   }
 
 }
