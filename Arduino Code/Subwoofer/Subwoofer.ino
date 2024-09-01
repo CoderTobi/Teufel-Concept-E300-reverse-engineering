@@ -140,6 +140,11 @@ void i2c_write_power(bool on)
 // volReduction und bassReduction sind beides Binärzahlen
 void i2c_write_volume(uint8_t volReduction, uint8_t bassReduction)
 {
+  Serial.print("DEBUG volred: ");
+  Serial.print(volReduction);
+  Serial.print(" bassred: ");
+  Serial.println(bassReduction);
+
   uint8_t volBCD = binToBCD(volReduction);
   uint8_t bassBCD = binToBCD(bassReduction);
   
@@ -222,24 +227,20 @@ void sendUpdate()
 
   uint8_t volReduction = 0;
   uint8_t bassReduction = 0;
+  int bassReductionInt = 0;
 
-  //TODO: Reduktion nochmal Prüfen, hatte bei meinen captures vom Original immer auf min
   volReduction = map(currentVol, 0, 100, 58, 0);
 
-  // Vorsicht uint, somit gibt 3 - 4 = Unfall
-  if(volReduction <= 4)
+  bassReductionInt = volReduction + map(currentBass, 0, 100, 8, -4);
+  if(bassReductionInt < 0)
   {
-    bassReduction = 12;
+    bassReduction = 0;
   }
   else{
-    bassReduction = volReduction + map(currentBass, 0, 100, 8, -4);
+    bassReduction = (uint8_t) bassReductionInt;
   }
 
-  if(bassReduction < 12)
-  {
-    bassReduction = 12;
-  }
-
+  // Vorsicht uint, somit gibt negative = Unfall
   i2c_write_volume(volReduction, bassReduction);
 }
 
@@ -260,9 +261,10 @@ void setup()
   // PIN Mode Setup
   pinMode(ST_PIN, OUTPUT);
   pinMode(MUTE_PIN, OUTPUT);
-  //pinMode(CD_PIN, OUTPUT);
+  pinMode(CD_PIN, OUTPUT);
   digitalWrite(ST_PIN, HIGH);
   digitalWrite(MUTE_PIN, LOW);
+  digitalWrite(CD_PIN, HIGH);
 
   // I2C Setup
   Wire.begin(SDA_PIN, SCL_PIN);
