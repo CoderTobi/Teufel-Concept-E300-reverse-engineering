@@ -4,7 +4,7 @@
 #include "secrets.hpp"
 
 // Pin Config
-const uint8_t CD_PIN = 23; // Zweck unbekannt - aktuell unused
+const uint8_t CD_PIN = 23;
 const uint8_t SDA_PIN = 15;
 const uint8_t SCL_PIN = 2;
 const uint8_t MUTE_PIN = 19;
@@ -190,7 +190,11 @@ void i2c_write_data(uint8_t address, uint8_t reg, uint8_t bcdNumbers)
 
 void turnOn()
 {  
-  digitalWrite(ST_PIN, LOW); // Aus Standby wecken
+  // Aus Standby wecken
+  // ST muss GND gezogen werden, damit das Relais schaltet
+  // Daher Pin auf high, damit der NPN Transistor durchschält und ST auf LOW zieht
+  // Wichtig! Transistor nicht vergessen
+  digitalWrite(ST_PIN, HIGH);
 
   myDelay(2491);
 
@@ -213,7 +217,7 @@ void turnOn()
 void turnOff()
 {
   i2c_write_power(false);
-  digitalWrite(ST_PIN, HIGH);
+  digitalWrite(ST_PIN, LOW); // LOW -> NPN zieht nicht mehr auf GND -> Pull Up zieht auf 5V
   digitalWrite(MUTE_PIN, LOW);
 }
 
@@ -259,12 +263,11 @@ void setup()
   Serial.print("Wifi"); 
 
   // PIN Mode Setup
-  pinMode(ST_PIN, OUTPUT);
+  pinMode(ST_PIN, OUTPUT); 
   pinMode(MUTE_PIN, OUTPUT);
-  pinMode(CD_PIN, OUTPUT);
-  digitalWrite(ST_PIN, HIGH);
+  pinMode(CD_PIN, INPUT);
+  digitalWrite(ST_PIN, LOW); // LOW -> NPN sperrt -> Pull Up zieht auf 5V -> Relais schält nicht
   digitalWrite(MUTE_PIN, LOW);
-  digitalWrite(CD_PIN, HIGH);
 
   // I2C Setup
   Wire.begin(SDA_PIN, SCL_PIN);
