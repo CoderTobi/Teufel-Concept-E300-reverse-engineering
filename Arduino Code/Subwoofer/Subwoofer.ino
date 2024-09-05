@@ -10,6 +10,9 @@ const uint8_t SCL_PIN = 2;
 const uint8_t MUTE_PIN = 19;
 const uint8_t ST_PIN = 22;
 
+// General Config
+const int playingChangedDelay = 2000; // Wie lange(ms) das Signal auf CD gleich bleiben muss, bis es als ein neuer Status erkannt wird
+
 // Globale Variablen
 uint8_t targetVol = 0; // Wert zwischen 0 und 100
 uint8_t targetBass = 0; // Wert zwischen 0 und 100
@@ -17,6 +20,8 @@ uint8_t currentVol = 0; // Wert zwischen 0 und 100
 uint8_t currentBass = 0; // Wert zwischen 0 und 100
 bool targetPower = false; // true=on und false=standby
 bool currentPower = false; // true=on und false=standby
+bool playing = false;
+unsigned long playingChanged = 0;
 
 WiFiClient client;
 HADevice device;
@@ -27,6 +32,7 @@ HAMqtt mqtt(client, device);
 HANumber numberAll("VolAll");
 HANumber numberBass("VolBass");
 HASwitch switchPower("Power");
+HABinarySensor sensorPlaying("Playing");
 
 // ===================================== Other =================================
 
@@ -52,6 +58,22 @@ void myDelay(int ms)
   while((millis() - startMillis) < ms)
   {
     mqtt.loop();
+    checkForAudio();
+  }
+}
+
+void checkForAudio()
+{
+  if( playing != digitalRead(CD_PIN))
+  {
+    playingChanged = millis();
+  }
+
+  if ((millis() - playingChanged) > playingChangedDelay)
+  {
+    playingChanged = millis();
+    playing = !playing;
+    sensorPlaying.setState(playing);
   }
 }
 
@@ -291,10 +313,16 @@ void setup()
   numberBass.setName("Volume Bass");
   numberBass.setIcon("mdi:volume-vibrate");
   numberBass.onCommand(onVolBassChange);
+  sensorPlaying.setName("Playing");
+  sensorPlaying.setIcon("mdi:play-circle");
+  sensorPlaying.setDeviceClass("sound");
 
   // LWT aktivieren
   device.enableSharedAvailability();
   device.enableLastWill();
+
+  // Other
+  unsigned long playingChanged = millis();
 
   // MQTT broker connection (muss ans Ende von Setup)
   mqtt.begin(MQTT_HOST, MQTT_USER, MQTT_PW);
@@ -303,6 +331,7 @@ void setup()
 // ===================================== Loop ===================================
 
 void loop() {
+  checkForAudio();
   mqtt.loop();
 
   if(targetPower != currentPower)
