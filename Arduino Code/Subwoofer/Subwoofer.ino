@@ -3,12 +3,12 @@
 #include <Wire.h>
 #include "secrets.hpp"
 
-// Pin Config
-const uint8_t CD_PIN = 23;
-const uint8_t SDA_PIN = 15;
-const uint8_t SCL_PIN = 2;
-const uint8_t MUTE_PIN = 19;
-const uint8_t ST_PIN = 22;
+// Pin Config - ESP-WROOM-32 Dev Kit
+const uint8_t CD_PIN = 17;
+const uint8_t SDA_PIN = 21;
+const uint8_t SCL_PIN = 22;
+const uint8_t MUTE_PIN = 18;
+const uint8_t ST_PIN = 19;
 
 // General Config
 const int playingChangedDelay = 2000; // Wie lange(ms) das Signal auf CD gleich bleiben muss, bis es als ein neuer Status erkannt wird
