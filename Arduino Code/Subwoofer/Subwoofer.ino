@@ -1,4 +1,6 @@
 #include <WiFi.h>
+#include <ESPmDNS.h>
+#include <ArduinoOTA.h>
 #include <ArduinoHA.h>
 #include <Wire.h>
 #include "secrets.hpp"
@@ -119,6 +121,46 @@ void onVolBassChange(HANumeric number, HANumber* sender)
   sender->setState(number); // report the selected option back to the HA panel
 }
 
+// -------------------- OTA -------------------
+void onOTAStart()
+{
+  String type;
+  if (ArduinoOTA.getCommand() == U_FLASH) {
+    type = "sketch";
+  } else {  // U_SPIFFS
+    type = "filesystem";
+  }
+
+  // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+  Serial.println("Start updating " + type);
+}
+
+
+void onOTAEnd() 
+{
+  Serial.println("\nOTA Done");
+}
+
+void onOTAProgress(unsigned int progress, unsigned int total) 
+{
+  Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+}
+
+void onOTAError(ota_error_t error) 
+{
+  Serial.printf("Error[%u]: ", error);
+  if (error == OTA_AUTH_ERROR) {
+    Serial.println("Auth Failed");
+  } else if (error == OTA_BEGIN_ERROR) {
+    Serial.println("Begin Failed");
+  } else if (error == OTA_CONNECT_ERROR) {
+    Serial.println("Connect Failed");
+  } else if (error == OTA_RECEIVE_ERROR) {
+    Serial.println("Receive Failed");
+  } else if (error == OTA_END_ERROR) {
+    Serial.println("End Failed");
+  }
+}
 // ===================================== I2C ===================================
 
 // ------------------------- helper --------------------
@@ -281,7 +323,7 @@ void setup()
   device.setName("Teufel-Soundsystem");
 
   // Serial Setup
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.print("Wifi"); 
 
   // PIN Mode Setup
@@ -293,7 +335,7 @@ void setup()
 
   // I2C Setup
   Wire.begin(SDA_PIN, SCL_PIN);
-  Wire.setClock(64000); // Original arbeitet bei 64kHz - unsicher ob ESP kann langsamer als 100kHz
+  Wire.setClock(64000); // Original arbeitet bei 64kHz
 
   // Wifi verbinden
   WiFi.begin(WIFI_SSID, WIFI_PW);
@@ -301,7 +343,9 @@ void setup()
     Serial.print("."); 
     myDelay(500); // waiting for the connection
   }
-  Serial.println("connected"); 
+  Serial.println("connected");
+  //Serial.print("IP address: ");
+  //Serial.println(WiFi.localIP()); <- IDK why aber die Zeile bricked alles...
 
   // Device Types Setup
   switchPower.onCommand(onSwitchCommand);
@@ -321,8 +365,20 @@ void setup()
   device.enableSharedAvailability();
   device.enableLastWill();
 
-  // Other
-  unsigned long playingChanged = millis();
+  // MDNS
+  MDNS.begin("Subwoofer");
+
+  // OTA
+  ArduinoOTA.setHostname("Subwoofer");
+  ArduinoOTA.setPassword(OTA_PW);
+  ArduinoOTA.onStart(onOTAStart);
+  ArduinoOTA.onEnd(onOTAEnd);
+  ArduinoOTA.onProgress(onOTAProgress);
+  ArduinoOTA.onError(onOTAError);
+  ArduinoOTA.begin();
+
+  // CD Check Setup
+  playingChanged = millis();
 
   // MQTT broker connection (muss ans Ende von Setup)
   mqtt.begin(MQTT_HOST, MQTT_USER, MQTT_PW);
@@ -331,8 +387,8 @@ void setup()
 // ===================================== Loop ===================================
 
 void loop() {
-  checkForAudio();
   mqtt.loop();
+  checkForAudio();
 
   if(targetPower != currentPower)
   {
@@ -359,4 +415,10 @@ void loop() {
     myDelay(100); // Anti Spam
   }
 
+  // Wenn wir im Standby sind
+  if(currentPower == false)
+  {
+    // OTA Updates durchführen
+    ArduinoOTA.handle();
+  }
 }
