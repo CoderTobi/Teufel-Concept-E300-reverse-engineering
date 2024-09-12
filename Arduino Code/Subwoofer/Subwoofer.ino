@@ -9,8 +9,8 @@
 const uint8_t CD_PIN = 17;
 const uint8_t SDA_PIN = 21;
 const uint8_t SCL_PIN = 22;
-const uint8_t MUTE_PIN = 18;
-const uint8_t ST_PIN = 19;
+const uint8_t MUTE_PIN = 19;
+const uint8_t ST_PIN = 18;
 
 // General Config
 const int playingChangedDelay = 2000; // Wie lange(ms) das Signal auf CD gleich bleiben muss, bis es als ein neuer Status erkannt wird
@@ -213,6 +213,7 @@ void i2c_write_volume(uint8_t volReduction, uint8_t bassReduction)
   uint8_t bassBCD = binToBCD(bassReduction);
   
   i2c_write_data(0x44, 0xED, volBCD);  // Volume All
+
   i2c_write_data(0x46, 0x45, volBCD);  // Volume CH1
   i2c_write_sep();
   i2c_write_data(0x46, 0x89, bassBCD); // Volume CH2 - Sub
@@ -289,7 +290,7 @@ void sendUpdate()
 {
   currentBass=targetBass;
   currentVol=targetVol;
-  
+
   i2c_write_sep();
   i2c_write_power(true);
 
@@ -335,7 +336,8 @@ void setup()
 
   // I2C Setup
   Wire.begin(SDA_PIN, SCL_PIN);
-  Wire.setClock(64000); // Original arbeitet bei 64kHz
+  Wire.setClock(50000); // Original arbeitet bei 64kHz
+  //Wire.setTimeout(0); // NUR ZUM TESTEN
 
   // Wifi verbinden
   WiFi.begin(WIFI_SSID, WIFI_PW);
