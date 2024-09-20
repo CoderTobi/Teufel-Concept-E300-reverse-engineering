@@ -1,5 +1,5 @@
 # Anschluss Display Board
-Das Display Board auf welchem sich die Regler für die Lautstärke und den Bass, als auch der Knopf für den Standby befinden ist über einen 7-Pin JST-HX Stecker mit dem Mainboard verbunden. Genau diesen Anschluss verwende ich, um meinen Subwoofer über HomeAssistant zu steuern.
+Das Display Board auf welchem sich die Regler für die Lautstärke und den Bass, als auch der Knopf für den Standby befinden, ist über einen 7-Pin JST-HX Stecker mit dem Mainboard verbunden. Genau diesen Anschluss verwende ich, um meinen Subwoofer über HomeAssistant zu steuern.
 
 ![Bild vom Anschluss am Mainboard](../../Bilder/20240312_200411.jpg)
 
@@ -16,7 +16,7 @@ Das Display Board auf welchem sich die Regler für die Lautstärke und den Bass,
 ## ST-Pin
 Der ST-Pin ist für das Schalten des Standby Relais. Dieses unterbricht die Spannungsversorgung zum großen Trafo am Boden des Subwoofers. Wenn ST auf `HIGH` ist schaltet das Relais nicht durch. Wenn ST auf `LOW` ist schaltet das Relais durch und die beiden Amps werden über den großen Trafo mit Spannung versorgt.
 
-Da ST am Standby Netzteil mit der Basis eines 2N5401 PNP Transistors verbunden ist, welcher dann wiederum über einen 2N5551 NPN Transistor das Relais schält muss ST zuverlässig auf GND geschaltet werden, um das Relais zu steuern.
+Da ST am Standby Netzteil mit der Basis eines 2N5401 PNP Transistors verbunden ist, welcher dann wiederum über einen 2N5551 NPN Transistor das Relais schält, muss ST zuverlässig auf GND geschaltet werden, um das Relais zu steuern.
 ![Schaltplan Standby Relais](<../../LT Spice/Standby Relais.png>)
 Es reicht nicht ST direkt an einen ESP32 zu hängen und den GPIO-PIN auf `LOW` zu setzen. Dementsprechend funktionieren auch simple I2C Logic Level Shifter nicht, da diese Pull Up Widerstände haben.
 

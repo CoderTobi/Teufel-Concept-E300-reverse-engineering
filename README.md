@@ -1,4 +1,5 @@
 # Teufel Concept E300 Reverse Engineering
+![Cover Bild](Bilder/20240906_013331.jpg)
 Dieses Repository enthält alle Dateien von meinem Reverse Engineering Projekt meines 5.1 Surround Sound Systems.
 Beim System handelt es sich um einen Concept E3 der Marke Teufel.
 Die Erkenntnisse aus diesem Projekt können jedoch sehr wahrscheinlich auf andere Systeme der Marke Teufel übertragen werden, solange sie aus einer ähnlichen Zeit stammen (ca. 2010).
