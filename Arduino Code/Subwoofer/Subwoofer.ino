@@ -13,7 +13,8 @@ const uint8_t MUTE_PIN = 19;
 const uint8_t ST_PIN = 18;
 
 // General Config
-const int playingChangedDelay = 2000; // Wie lange(ms) das Signal auf CD gleich bleiben muss, bis es als ein neuer Status erkannt wird
+const int playingChangedDelay_off = 2000; // Wie lange(ms) das Signal auf CD HIGH bleiben muss, bis der Status geändert wird
+const int playingChangedDelay_on = 100; // Wie lange(ms) das Signal auf CD LOW bleiben muss, bis der Status geändert wird
 
 // Globale Variablen
 uint8_t targetVol = 0; // Wert zwischen 0 und 100
@@ -71,11 +72,23 @@ void checkForAudio()
     playingChanged = millis();
   }
 
-  if ((millis() - playingChanged) > playingChangedDelay)
+  if(playing)
   {
-    playingChanged = millis();
-    playing = !playing;
-    sensorPlaying.setState(playing);
+    if ((millis() - playingChanged) > playingChangedDelay_off)
+    {
+      playingChanged = millis();
+      playing = !playing;
+      sensorPlaying.setState(playing);
+    }
+  }
+  else
+  {
+    if ((millis() - playingChanged) > playingChangedDelay_on)
+    {
+      playingChanged = millis();
+      playing = !playing;
+      sensorPlaying.setState(playing);
+    }
   }
 }
 
