@@ -27,7 +27,7 @@ bool playing = false;
 unsigned long playingChanged = 0;
 
 WiFiClient client;
-HADevice device;
+HADevice device("Subwoofer");
 HAMqtt mqtt(client, device);
 
 // Meine Devices
@@ -355,9 +355,6 @@ void setup()
   Serial.println("connected");
 
   // Device Setup
-  byte mac[6];
-  WiFi.macAddress(mac); //only works AFTER Wifi.begin()
-  device.setUniqueId(mac, sizeof(mac));
   device.setName("Teufel-Soundsystem");
 
   // Device Types Setup
