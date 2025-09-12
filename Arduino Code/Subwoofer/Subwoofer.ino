@@ -330,12 +330,6 @@ void sendUpdate()
 
 void setup() 
 {
-  // Device Setup
-  byte mac[6];
-  WiFi.macAddress(mac);
-  device.setUniqueId(mac, sizeof(mac));
-  device.setName("Teufel-Soundsystem");
-
   // Serial Setup
   Serial.begin(115200);
   Serial.print("Wifi"); 
@@ -359,8 +353,12 @@ void setup()
     myDelay(500); // waiting for the connection
   }
   Serial.println("connected");
-  //Serial.print("IP address: ");
-  //Serial.println(WiFi.localIP()); <- IDK why aber die Zeile bricked alles...
+
+  // Device Setup
+  byte mac[6];
+  WiFi.macAddress(mac); //only works AFTER Wifi.begin()
+  device.setUniqueId(mac, sizeof(mac));
+  device.setName("Teufel-Soundsystem");
 
   // Device Types Setup
   switchPower.onCommand(onSwitchCommand);
